@@ -21,6 +21,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 risk_agent_dir = os.path.join(current_dir, 'risk_assessment_agent')
 sys.path.insert(0, risk_agent_dir)
 
+# Check if modules are available
 try:
     from models import (
         RiskAssessmentRequest, 
@@ -30,10 +31,10 @@ try:
         RiskFactor
     )
     from risk_agent import RiskAssessmentAgent
+    MODULES_LOADED = True
 except ImportError as e:
-    st.error(f"Error importing risk assessment modules: {e}")
-    st.error("Please ensure the risk_assessment_agent directory is properly set up.")
-    st.stop()
+    MODULES_LOADED = False
+    IMPORT_ERROR = str(e)
 
 # Page configuration
 st.set_page_config(
@@ -109,6 +110,59 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+def check_setup():
+    """Check if the application is properly set up"""
+    errors = []
+    
+    # Check if modules are loaded
+    if not MODULES_LOADED:
+        errors.append(f"Module import error: {IMPORT_ERROR}")
+    
+    # Check if .env file exists
+    env_path = os.path.join(risk_agent_dir, '.env')
+    if not os.path.exists(env_path):
+        errors.append("Missing .env file in risk_assessment_agent directory")
+    
+    # Check if required files exist
+    required_files = ['models.py', 'risk_agent.py']
+    for file in required_files:
+        file_path = os.path.join(risk_agent_dir, file)
+        if not os.path.exists(file_path):
+            errors.append(f"Missing required file: {file}")
+    
+    return errors
+
+def show_setup_instructions():
+    """Show setup instructions"""
+    st.error("🚨 Setup Required")
+    
+    st.markdown("""
+    ### Setup Instructions:
+    
+    1. **Check Directory Structure:**
+       ```
+       PRISM-AI/
+       ├── streamlit_app.py
+       └── risk_assessment_agent/
+           ├── .env
+           ├── models.py
+           ├── risk_agent.py
+           └── other files...
+       ```
+    
+    2. **Create .env file in risk_assessment_agent directory with:**
+       ```
+       GEMINI_API_KEY=your_api_key_here
+       ```
+    
+    3. **Install required dependencies:**
+       ```bash
+       pip install -r requirements_streamlit.txt
+       ```
+    
+    4. **Restart the Streamlit application**
+    """)
+
 # Initialize session state
 if 'assessment_results' not in st.session_state:
     st.session_state.assessment_results = None
@@ -156,8 +210,11 @@ def create_risk_gauge(overall_risk: str, confidence: float) -> go.Figure:
     fig.update_layout(height=300, margin=dict(l=20, r=20, t=40, b=20))
     return fig
 
-def create_risk_factors_chart(risk_factors: List[RiskFactor]) -> go.Figure:
+def create_risk_factors_chart(risk_factors: List) -> go.Figure:
     """Create a horizontal bar chart for risk factors"""
+    if not risk_factors:
+        return go.Figure()
+        
     categories = [factor.category for factor in risk_factors]
     impact_scores = [factor.impact_score for factor in risk_factors]
     colors = [get_risk_color(factor.risk_level) for factor in risk_factors]
@@ -193,6 +250,19 @@ def main():
         <p>Personalized Risk Intelligence Scoring Model</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Check setup
+    setup_errors = check_setup()
+    if setup_errors:
+        st.warning("⚠️ Setup issues detected:")
+        for error in setup_errors:
+            st.write(f"• {error}")
+        
+        with st.expander("Show Setup Instructions"):
+            show_setup_instructions()
+        
+        if not MODULES_LOADED:
+            st.stop()
     
     # Sidebar for input
     with st.sidebar:
@@ -238,10 +308,10 @@ def main():
         requested_by = st.text_input("Requested By", placeholder="Your name")
         
         # Assessment button
-        assess_button = st.button("🚀 Run Risk Assessment", type="primary", use_container_width=True)
+        assess_button = st.button("🚀 Run Risk Assessment", type="primary", use_container_width=True, disabled=not MODULES_LOADED)
     
     # Main content area
-    if assess_button:
+    if assess_button and MODULES_LOADED:
         if not entity_name:
             st.error("Please provide an entity name to proceed with the assessment.")
             return
@@ -275,10 +345,18 @@ def main():
                 risk_agent = RiskAssessmentAgent()
                 
                 # Run the assessment
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(risk_agent.assess_risk(request))
-                loop.close()
+                try:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    result = loop.run_until_complete(risk_agent.assess_risk(request))
+                    loop.close()
+                except Exception as e:
+                    # Fallback: try without asyncio if there are issues
+                    import inspect
+                    if inspect.iscoroutinefunction(risk_agent.assess_risk):
+                        result = asyncio.run(risk_agent.assess_risk(request))
+                    else:
+                        result = risk_agent.assess_risk(request)
                 
                 # Store results in session state
                 st.session_state.assessment_results = result
@@ -288,6 +366,7 @@ def main():
                 
             except Exception as e:
                 st.error(f"❌ Error during risk assessment: {str(e)}")
+                st.error("Please check your API key and network connection.")
                 return
     
     # Display results if available
@@ -418,35 +497,41 @@ def main():
         
         with col1:
             # Export as JSON
-            json_data = result.model_dump_json(indent=2)
-            st.download_button(
-                label="📄 Download JSON",
-                data=json_data,
-                file_name=f"risk_assessment_{result.entity_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                mime="application/json"
-            )
+            try:
+                json_data = result.model_dump_json(indent=2)
+                st.download_button(
+                    label="📄 Download JSON",
+                    data=json_data,
+                    file_name=f"risk_assessment_{result.entity_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    mime="application/json"
+                )
+            except:
+                st.write("JSON export not available")
         
         with col2:
             # Export as CSV (risk factors)
             if result.risk_factors:
-                factors_data = []
-                for factor in result.risk_factors:
-                    factors_data.append({
-                        'Category': factor.category,
-                        'Risk Level': factor.risk_level,
-                        'Impact Score': factor.impact_score,
-                        'Description': factor.description,
-                        'Contributing Factors': '; '.join(factor.contributing_factors)
-                    })
-                
-                df = pd.DataFrame(factors_data)
-                csv_data = df.to_csv(index=False)
-                st.download_button(
-                    label="📊 Download CSV",
-                    data=csv_data,
-                    file_name=f"risk_factors_{result.entity_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
+                try:
+                    factors_data = []
+                    for factor in result.risk_factors:
+                        factors_data.append({
+                            'Category': factor.category,
+                            'Risk Level': factor.risk_level,
+                            'Impact Score': factor.impact_score,
+                            'Description': factor.description,
+                            'Contributing Factors': '; '.join(factor.contributing_factors) if factor.contributing_factors else ''
+                        })
+                    
+                    df = pd.DataFrame(factors_data)
+                    csv_data = df.to_csv(index=False)
+                    st.download_button(
+                        label="📊 Download CSV",
+                        data=csv_data,
+                        file_name=f"risk_factors_{result.entity_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                        mime="text/csv"
+                    )
+                except Exception as e:
+                    st.write(f"CSV export error: {str(e)}")
     
     # Assessment history
     if st.session_state.assessment_history:
