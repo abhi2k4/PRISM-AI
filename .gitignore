@@ -1,0 +1,182 @@
+# PRISM Risk Assessment Platform - Git Ignore File
+
+# Environment Variables and Secrets
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.env
+
+# API Keys and Sensitive Configuration
+**/config/secrets.json
+**/config/production.json
+api_keys.txt
+credentials.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+risk_env/
+prism_env/
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Logs
+*.log
+logs/
+*.log.*
+log_*.txt
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+
+# Node.js (for React frontend)
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# React Build Artifacts
+frontend/build/
+frontend/dist/
+frontend/.next/
+frontend/out/
+
+# Package Manager Files
+package-lock.json
+yarn.lock
+.pnpm-debug.log*
+
+# Runtime and Temporary Files
+*.tmp
+*.temp
+temp/
+tmp/
+.cache/
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# AI Model Files and Caches
+*.model
+*.pkl
+*.pickle
+models/cache/
+.transformers_cache/
+
+# Data Files (unless specifically needed)
+data/raw/
+data/processed/
+*.csv
+*.xlsx
+*.json
+!**/sample_data.json
+!**/test_data.json
+
+# Backup Files
+*.backup
+*.bak
+*.orig
+
+# Documentation Build
+docs/_build/
+docs/build/
+
+# Deployment
+.vercel
+.netlify
+
+# Local Development
+.local/
+local_settings.py
+settings_local.py
+
+# Risk Assessment Specific
+risk_reports/
+assessments/
+client_data/
+confidential/
+
+# Test Output
+test_results/
+coverage_reports/
+
+# Performance and Profiling
+*.prof
+.profiling/
+
+# Compiled Assets
+*.css.map
+*.js.map
+
+# Linting and Formatting
+.eslintcache
+.stylelintcache
+risk_assessment_agent/.env
+risk_assessment_agent/.env
