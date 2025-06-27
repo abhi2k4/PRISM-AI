@@ -17,7 +17,7 @@ A comprehensive AI-powered risk assessment platform with FastAPI backend and Rea
 ## 📊 Project Structure
 
 ```
-prism/
+prism-ai/
 ├── risk_assessment_agent/          # Backend (FastAPI)
 │   ├── main.py                     # PRISM API application
 │   ├── risk_agent.py               # AI risk intelligence engine
