@@ -1,43 +1,13 @@
-[global]
-
-# Set to false to disable the warning about beta features
-showWarningOnDirectExecution = false
-
-# Set to false to disable the global development mode
-developmentMode = false
-
-# Set to false to disable file watching for hot reloading
-fileWatcherType = "none"
+[theme]
+primaryColor = "#667eea"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
 
 [server]
-
-# The port where the server will listen for client and browser connections
 port = 8501
-
-# The IP address where the server will listen for client and browser connections
-address = "localhost"
-
-# Whether to enable CORS protection
 enableCORS = false
-
-# Whether to enable XSRF protection
 enableXsrfProtection = false
 
 [browser]
-
-# Whether to automatically open the browser when starting the server
 gatherUsageStats = false
-
-[theme]
-
-# The primary color for interactive widgets
-primaryColor = "#667eea"
-
-# The background color for the main content area
-backgroundColor = "#ffffff"
-
-# The background color used for the sidebar and most interactive widgets
-secondaryBackgroundColor = "#f0f2f6"
-
-# The color used for almost all text
-textColor = "#262730"

@@ -7,14 +7,29 @@ import asyncio
 import json
 from datetime import datetime
 from typing import Dict, List, Optional
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-
-# Import our risk assessment modules
 import sys
 import os
+
+# Try to import optional dependencies with fallbacks
+PANDAS_AVAILABLE = False
+PLOTLY_AVAILABLE = False
+pd = None
+px = None
+go = None
+
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    pass
+
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    pass
 
 # Add the risk_assessment_agent directory to the path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -179,8 +194,11 @@ def get_risk_color(risk_level: str) -> str:
     }
     return colors.get(risk_level, "#667eea")
 
-def create_risk_gauge(overall_risk: str, confidence: float) -> go.Figure:
+def create_risk_gauge(overall_risk: str, confidence: float):
     """Create a risk gauge chart"""
+    if not PLOTLY_AVAILABLE:
+        return None
+        
     risk_values = {"LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
     risk_value = risk_values.get(overall_risk, 2)
     
@@ -210,10 +228,13 @@ def create_risk_gauge(overall_risk: str, confidence: float) -> go.Figure:
     fig.update_layout(height=300, margin=dict(l=20, r=20, t=40, b=20))
     return fig
 
-def create_risk_factors_chart(risk_factors: List) -> go.Figure:
+def create_risk_factors_chart(risk_factors: List):
     """Create a horizontal bar chart for risk factors"""
+    if not PLOTLY_AVAILABLE:
+        return None
+        
     if not risk_factors:
-        return go.Figure()
+        return go.Figure() if go else None
         
     categories = [factor.category for factor in risk_factors]
     impact_scores = [factor.impact_score for factor in risk_factors]
@@ -250,6 +271,13 @@ def main():
         <p>Personalized Risk Intelligence Scoring Model</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Show dependency warnings
+    if not PLOTLY_AVAILABLE:
+        st.warning("⚠️ **Plotly not installed** - Charts will be displayed as simple text. Install with: `pip install plotly`")
+    
+    if not PANDAS_AVAILABLE:
+        st.warning("⚠️ **Pandas not installed** - CSV export will be limited. Install with: `pip install pandas`")
     
     # Check setup
     setup_errors = check_setup()
@@ -425,14 +453,37 @@ def main():
         
         with col1:
             st.subheader("🎯 Risk Gauge")
-            gauge_fig = create_risk_gauge(result.overall_risk_level, result.confidence_score)
-            st.plotly_chart(gauge_fig, use_container_width=True)
+            if PLOTLY_AVAILABLE:
+                gauge_fig = create_risk_gauge(result.overall_risk_level, result.confidence_score)
+                if gauge_fig:
+                    st.plotly_chart(gauge_fig, use_container_width=True)
+            else:
+                st.markdown(f"""
+                <div class="metric-card" style="height: 280px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                    <h2 style="color: {get_risk_color(result.overall_risk_level)}; margin: 0;">
+                        {result.overall_risk_level}
+                    </h2>
+                    <p style="margin: 0.5rem 0 0 0; color: gray;">
+                        Confidence: {result.confidence_score:.1%}
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
         
         with col2:
             st.subheader("📊 Risk Factors Analysis")
             if result.risk_factors:
-                factors_fig = create_risk_factors_chart(result.risk_factors)
-                st.plotly_chart(factors_fig, use_container_width=True)
+                if PLOTLY_AVAILABLE:
+                    factors_fig = create_risk_factors_chart(result.risk_factors)
+                    if factors_fig:
+                        st.plotly_chart(factors_fig, use_container_width=True)
+                else:
+                    # Simple table view when plotly is not available
+                    for factor in result.risk_factors:
+                        st.markdown(f"""
+                        **{factor.category}**: {factor.risk_level} (Impact: {factor.impact_score:.1f})
+                        """)
+            else:
+                st.info("No risk factors to display")
         
         # Executive Summary
         st.header("📄 Executive Summary")
@@ -512,26 +563,43 @@ def main():
             # Export as CSV (risk factors)
             if result.risk_factors:
                 try:
-                    factors_data = []
-                    for factor in result.risk_factors:
-                        factors_data.append({
-                            'Category': factor.category,
-                            'Risk Level': factor.risk_level,
-                            'Impact Score': factor.impact_score,
-                            'Description': factor.description,
-                            'Contributing Factors': '; '.join(factor.contributing_factors) if factor.contributing_factors else ''
-                        })
-                    
-                    df = pd.DataFrame(factors_data)
-                    csv_data = df.to_csv(index=False)
-                    st.download_button(
-                        label="📊 Download CSV",
-                        data=csv_data,
-                        file_name=f"risk_factors_{result.entity_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                        mime="text/csv"
-                    )
+                    if PANDAS_AVAILABLE:
+                        factors_data = []
+                        for factor in result.risk_factors:
+                            factors_data.append({
+                                'Category': factor.category,
+                                'Risk Level': factor.risk_level,
+                                'Impact Score': factor.impact_score,
+                                'Description': factor.description,
+                                'Contributing Factors': '; '.join(factor.contributing_factors) if factor.contributing_factors else ''
+                            })
+                        
+                        df = pd.DataFrame(factors_data)
+                        csv_data = df.to_csv(index=False)
+                        st.download_button(
+                            label="📊 Download CSV",
+                            data=csv_data,
+                            file_name=f"risk_factors_{result.entity_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                            mime="text/csv"
+                        )
+                    else:
+                        # Simple CSV without pandas
+                        csv_lines = ["Category,Risk Level,Impact Score,Description,Contributing Factors"]
+                        for factor in result.risk_factors:
+                            contributing = '; '.join(factor.contributing_factors) if factor.contributing_factors else ''
+                            csv_lines.append(f'"{factor.category}","{factor.risk_level}",{factor.impact_score},"{factor.description}","{contributing}"')
+                        
+                        csv_data = '\n'.join(csv_lines)
+                        st.download_button(
+                            label="📊 Download CSV (Basic)",
+                            data=csv_data,
+                            file_name=f"risk_factors_{result.entity_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                            mime="text/csv"
+                        )
                 except Exception as e:
                     st.write(f"CSV export error: {str(e)}")
+            else:
+                st.write("No risk factors to export")
     
     # Assessment history
     if st.session_state.assessment_history:
