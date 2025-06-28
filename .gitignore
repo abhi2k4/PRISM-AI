@@ -180,3 +180,4 @@ coverage_reports/
 .stylelintcache
 risk_assessment_agent/.env
 risk_assessment_agent/.env
+.streamlit/secrets.toml

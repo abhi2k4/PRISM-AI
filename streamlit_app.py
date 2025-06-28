@@ -11,6 +11,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import base64
 
 # Import our risk assessment modules
 import sys
@@ -39,10 +40,65 @@ except ImportError as e:
 # Page configuration
 st.set_page_config(
     page_title="PRISM - Risk Assessment",
-    page_icon="🔍",
+    page_icon="🔍",  # Fallback emoji icon
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+def get_base64_of_bin_file(bin_file):
+    """Convert binary file to base64 string"""
+    try:
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except:
+        return None
+
+def set_favicon():
+    """Set favicon using base64 encoding for better compatibility"""
+    favicon_paths = [
+        "./static/favicon.ico",
+        "./static/favicon.png", 
+        "./frontend/public/favicon.svg",
+        "./frontend/public/logo192.png"
+    ]
+    
+    # Try to find and encode favicon
+    favicon_b64 = None
+    favicon_type = "image/x-icon"
+    
+    for path in favicon_paths:
+        if os.path.exists(path):
+            favicon_b64 = get_base64_of_bin_file(path)
+            if favicon_b64:
+                if path.endswith('.png'):
+                    favicon_type = "image/png"
+                elif path.endswith('.svg'):
+                    favicon_type = "image/svg+xml"
+                break
+    
+    if favicon_b64:
+        st.markdown(f"""
+        <head>
+            <link rel="icon" type="{favicon_type}" href="data:{favicon_type};base64,{favicon_b64}">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="description" content="PRISM - Personalized Risk Intelligence Scoring Model">
+            <meta name="keywords" content="risk assessment, financial analysis, AI, machine learning">
+        </head>
+        """, unsafe_allow_html=True)
+    else:
+        # Fallback to emoji favicon
+        st.markdown("""
+        <head>
+            <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="description" content="PRISM - Personalized Risk Intelligence Scoring Model">
+            <meta name="keywords" content="risk assessment, financial analysis, AI, machine learning">
+        </head>
+        """, unsafe_allow_html=True)
+
+# Set custom favicon
+set_favicon()
 
 # Custom CSS for better styling
 st.markdown("""
@@ -57,11 +113,17 @@ st.markdown("""
         color: white;
         text-align: center;
         margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: bold;
     }
     .main-header p {
         color: #f0f0f0;
         text-align: center;
         margin: 0.5rem 0 0 0;
+        font-size: 1.2rem;
     }
     .risk-card {
         background: white;
@@ -329,33 +391,39 @@ def create_risk_factors_chart(risk_factors: List) -> go.Figure:
 def main():
     """Main Streamlit application"""
     
-    # Header
-    st.markdown("""
+    # Header with Logo
+    logo_svg = """
+    <svg width="60" height="60" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 15px;">
+    <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+    <stop offset="30%" style="stop-color:#3b82f6;stop-opacity:1" />
+    <stop offset="70%" style="stop-color:#06b6d4;stop-opacity:1" />
+    <stop offset="100%" style="stop-color:#10b981;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" style="stop-color:#312e81;stop-opacity:1" />
+    <stop offset="50%" style="stop-color:#6366f1;stop-opacity:1" />
+    <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+    </defs>
+    <path d="M200 50 L350 300 L50 300 Z" fill="url(#grad1)" stroke="#1e3a8a" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M200 50 L200 300" stroke="#1e3a8a" stroke-width="6"/>
+    <path d="M200 50 L125 225" stroke="#1e3a8a" stroke-width="6"/>
+    <path d="M200 50 L275 225" stroke="#1e3a8a" stroke-width="6"/>
+    <path d="M125 225 L275 225" stroke="#1e3a8a" stroke-width="6"/>
+    <path d="M200 50 L125 225 L50 300 L200 300 Z" fill="url(#grad2)" opacity="0.8"/>
+    <path d="M200 50 L275 225 L350 300 L200 300 Z" fill="url(#grad1)" opacity="0.9"/>
+    <path d="M125 225 L275 225 L350 300 L50 300 Z" fill="url(#grad2)" opacity="0.7"/>
+    </svg>
+    """
+    
+    st.markdown(f"""
     <div class="main-header">
-        <h1>🔍 PRISM</h1>
+        <h1>{logo_svg}PRISM</h1>
         <p>Personalized Risk Intelligence Scoring Model</p>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Debug: Show secrets information
-    # with st.expander("🔧 Debug Information", expanded=False):
-    #     st.write("**Secrets Debug:**")
-    #     try:
-    #         st.write(f"- Secrets available: {hasattr(st, 'secrets')}")
-    #         if hasattr(st, 'secrets'):
-    #             st.write(f"- Available sections: {list(st.secrets.keys()) if st.secrets else 'None'}")
-    #             if "general" in st.secrets:
-    #                 general_keys = list(st.secrets["general"].keys())
-    #                 st.write(f"- General section keys: {general_keys}")
-    #                 if "GEMINI_API_KEY" in st.secrets["general"]:
-    #                     api_key = st.secrets["general"]["GEMINI_API_KEY"]
-    #                     st.write(f"- API key present: {bool(api_key)}")
-    #                     st.write(f"- API key length: {len(api_key) if api_key else 0}")
-    #                     st.write(f"- API key starts with: {api_key[:10]}..." if api_key and len(api_key) > 10 else "N/A")
-    #             else:
-    #                 st.write("- No 'general' section found")
-    #     except Exception as e:
-    #         st.write(f"- Error accessing secrets: {e}")
     
     # Initialize environment from secrets
     secrets_configured = check_secrets()
@@ -694,4 +762,5 @@ def main():
         """)
 
 if __name__ == "__main__":
+    set_favicon()
     main()

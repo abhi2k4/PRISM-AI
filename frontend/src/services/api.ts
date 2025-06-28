@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { RiskAssessmentRequest, RiskAssessmentResponse, ApiResponse } from '../types';
 
-// Use explicit backend URL - bypassing proxy issues
-const API_BASE_URL = 'http://localhost:8081';
+// Use environment variable or default to localhost:8000
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
