@@ -338,24 +338,24 @@ def main():
     """, unsafe_allow_html=True)
     
     # Debug: Show secrets information
-    with st.expander("🔧 Debug Information", expanded=False):
-        st.write("**Secrets Debug:**")
-        try:
-            st.write(f"- Secrets available: {hasattr(st, 'secrets')}")
-            if hasattr(st, 'secrets'):
-                st.write(f"- Available sections: {list(st.secrets.keys()) if st.secrets else 'None'}")
-                if "general" in st.secrets:
-                    general_keys = list(st.secrets["general"].keys())
-                    st.write(f"- General section keys: {general_keys}")
-                    if "GEMINI_API_KEY" in st.secrets["general"]:
-                        api_key = st.secrets["general"]["GEMINI_API_KEY"]
-                        st.write(f"- API key present: {bool(api_key)}")
-                        st.write(f"- API key length: {len(api_key) if api_key else 0}")
-                        st.write(f"- API key starts with: {api_key[:10]}..." if api_key and len(api_key) > 10 else "N/A")
-                else:
-                    st.write("- No 'general' section found")
-        except Exception as e:
-            st.write(f"- Error accessing secrets: {e}")
+    # with st.expander("🔧 Debug Information", expanded=False):
+    #     st.write("**Secrets Debug:**")
+    #     try:
+    #         st.write(f"- Secrets available: {hasattr(st, 'secrets')}")
+    #         if hasattr(st, 'secrets'):
+    #             st.write(f"- Available sections: {list(st.secrets.keys()) if st.secrets else 'None'}")
+    #             if "general" in st.secrets:
+    #                 general_keys = list(st.secrets["general"].keys())
+    #                 st.write(f"- General section keys: {general_keys}")
+    #                 if "GEMINI_API_KEY" in st.secrets["general"]:
+    #                     api_key = st.secrets["general"]["GEMINI_API_KEY"]
+    #                     st.write(f"- API key present: {bool(api_key)}")
+    #                     st.write(f"- API key length: {len(api_key) if api_key else 0}")
+    #                     st.write(f"- API key starts with: {api_key[:10]}..." if api_key and len(api_key) > 10 else "N/A")
+    #             else:
+    #                 st.write("- No 'general' section found")
+    #     except Exception as e:
+    #         st.write(f"- Error accessing secrets: {e}")
     
     # Initialize environment from secrets
     secrets_configured = check_secrets()
