@@ -1,6 +1,6 @@
 """
 PRISM - Personalized Risk Intelligence Scoring Model
-Streamlit Application
+Streamlit Application (Updated for st.secrets)
 """
 import streamlit as st
 import asyncio
@@ -107,8 +107,35 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
+    .secrets-warning {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 5px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
 </style>
 """, unsafe_allow_html=True)
+
+def check_secrets():
+    """Check if secrets are properly configured"""
+    try:
+        api_key = st.secrets["general"]["GEMINI_API_KEY"]
+        return bool(api_key and api_key.strip() and api_key != "your_api_key_here")
+    except KeyError:
+        return False
+    except Exception:
+        return False
+
+def initialize_environment():
+    """Initialize environment variables from secrets"""
+    try:
+        api_key = st.secrets["general"]["GEMINI_API_KEY"]
+        os.environ["GEMINI_API_KEY"] = api_key
+        return True
+    except Exception as e:
+        st.error(f"Error initializing environment: {str(e)}")
+        return False
 
 def check_setup():
     """Check if the application is properly set up"""
@@ -118,10 +145,9 @@ def check_setup():
     if not MODULES_LOADED:
         errors.append(f"Module import error: {IMPORT_ERROR}")
     
-    # Check if .env file exists
-    env_path = os.path.join(risk_agent_dir, '.env')
-    if not os.path.exists(env_path):
-        errors.append("Missing .env file in risk_assessment_agent directory")
+    # Check if API key is available in secrets
+    if not check_secrets():
+        errors.append("GEMINI_API_KEY not found or empty in st.secrets")
     
     # Check if required files exist
     required_files = ['models.py', 'risk_agent.py']
@@ -133,34 +159,52 @@ def check_setup():
     return errors
 
 def show_setup_instructions():
-    """Show setup instructions"""
+    """Show setup instructions for st.secrets"""
     st.error("🚨 Setup Required")
     
     st.markdown("""
-    ### Setup Instructions:
+    ### Setup Instructions for Streamlit Secrets:
     
-    1. **Check Directory Structure:**
+    #### For Local Development:
+    
+    1. **Create `.streamlit/secrets.toml` file in your project root:**
+       ```toml
+       [general]
+       GEMINI_API_KEY = "your_actual_api_key_here"
+       ```
+    
+    2. **Directory Structure:**
        ```
        PRISM-AI/
+       ├── .streamlit/
+       │   └── secrets.toml
        ├── streamlit_app.py
        └── risk_assessment_agent/
-           ├── .env
            ├── models.py
            ├── risk_agent.py
            └── other files...
        ```
     
-    2. **Create .env file in risk_assessment_agent directory with:**
-       ```
-       GEMINI_API_KEY=your_api_key_here
-       ```
-    
-    3. **Install required dependencies:**
+    3. **Install dependencies:**
        ```bash
-       pip install -r requirements_streamlit.txt
+       pip install streamlit plotly pandas google-generativeai pydantic
        ```
     
-    4. **Restart the Streamlit application**
+    #### For Streamlit Cloud Deployment:
+    
+    1. **Push your code (without secrets.toml)**
+    2. **Go to your app settings → Secrets**
+    3. **Add your secrets in TOML format:**
+       ```toml
+       [general]
+       GEMINI_API_KEY = "your_actual_api_key_here"
+       ```
+    4. **Deploy your app**
+    
+    #### Important Notes:
+    - Never commit `.streamlit/secrets.toml` to version control
+    - Add `secrets.toml` to your `.gitignore` file
+    - Use the same TOML format for both local and cloud deployment
     """)
 
 # Initialize session state
@@ -251,6 +295,11 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
+    # Initialize environment from secrets
+    secrets_configured = check_secrets()
+    if secrets_configured:
+        initialize_environment()
+    
     # Check setup
     setup_errors = check_setup()
     if setup_errors:
@@ -261,8 +310,15 @@ def main():
         with st.expander("Show Setup Instructions"):
             show_setup_instructions()
         
-        if not MODULES_LOADED:
+        if not MODULES_LOADED or not secrets_configured:
             st.stop()
+    
+    # Show secrets status in sidebar
+    with st.sidebar:
+        if secrets_configured:
+            st.success("🔑 API Key configured")
+        else:
+            st.error("🔑 API Key missing")
     
     # Sidebar for input
     with st.sidebar:
@@ -308,10 +364,15 @@ def main():
         requested_by = st.text_input("Requested By", placeholder="Your name")
         
         # Assessment button
-        assess_button = st.button("🚀 Run Risk Assessment", type="primary", use_container_width=True, disabled=not MODULES_LOADED)
+        assess_button = st.button(
+            "🚀 Run Risk Assessment", 
+            type="primary", 
+            use_container_width=True, 
+            disabled=not (MODULES_LOADED and secrets_configured)
+        )
     
     # Main content area
-    if assess_button and MODULES_LOADED:
+    if assess_button and MODULES_LOADED and secrets_configured:
         if not entity_name:
             st.error("Please provide an entity name to proceed with the assessment.")
             return
@@ -562,6 +623,10 @@ def main():
         ### About PRISM
         PRISM uses advanced AI (Google Gemini) to analyze multiple risk factors and provide 
         comprehensive, personalized risk assessments with actionable recommendations.
+        
+        ### Configuration
+        This app uses Streamlit secrets for secure API key management. Make sure to configure
+        your GEMINI_API_KEY in the secrets.toml file or Streamlit Cloud settings.
         """)
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 # PRISM Streamlit Application Requirements
-
+plotly
 # Core Streamlit
 streamlit>=1.28.0
 
