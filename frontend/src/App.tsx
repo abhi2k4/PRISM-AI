@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Shield, BarChart3, Settings, Home, Github, Zap, TrendingUp, Activity, Bell, User, Search, Sparkles } from 'lucide-react';
+import { Shield, BarChart3, Settings, Home, Github, Zap, TrendingUp, Activity, Bell, User, Sparkles } from 'lucide-react';
 import RiskAssessmentForm from './components/RiskAssessmentForm';
 import RiskAssessmentResult from './components/RiskAssessmentResult';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -80,6 +80,12 @@ const Header: React.FC = () => {
 
 // Enhanced Footer Component
 const Footer: React.FC = () => {
+  const handleLinkClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    // Add navigation logic here when ready
+    console.log('Navigation feature coming soon');
+  };
+
   return (
     <footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-white border-t border-gray-700 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -105,15 +111,17 @@ const Footer: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-blue-400 transition-colors duration-300"
+                aria-label="Visit our GitHub repository"
               >
                 <Github className="w-6 h-6" />
               </a>
-              <a
-                href="#"
+              <button
+                onClick={handleLinkClick}
                 className="text-gray-400 hover:text-blue-400 transition-colors duration-300"
+                aria-label="Activity dashboard (coming soon)"
               >
                 <Activity className="w-6 h-6" />
-              </a>
+              </button>
             </div>
           </div>
 
@@ -123,8 +131,22 @@ const Footer: React.FC = () => {
             <ul className="space-y-2">
               <li><Link to="/" className="text-gray-300 hover:text-blue-400 transition-colors">Risk Assessment</Link></li>
               <li><Link to="/dashboard" className="text-gray-300 hover:text-blue-400 transition-colors">Analytics</Link></li>
-              <li><a href="#" className="text-gray-300 hover:text-blue-400 transition-colors">API Documentation</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-blue-400 transition-colors">Integrations</a></li>
+              <li>
+                <button 
+                  onClick={handleLinkClick}
+                  className="text-gray-300 hover:text-blue-400 transition-colors text-left"
+                >
+                  API Documentation
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={handleLinkClick}
+                  className="text-gray-300 hover:text-blue-400 transition-colors text-left"
+                >
+                  Integrations
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -132,10 +154,38 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4 text-white">Support</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-blue-400 transition-colors">Help Center</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-blue-400 transition-colors">Contact Us</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-blue-400 transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-blue-400 transition-colors">Terms of Service</a></li>
+              <li>
+                <button 
+                  onClick={handleLinkClick}
+                  className="text-gray-300 hover:text-blue-400 transition-colors text-left"
+                >
+                  Help Center
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={handleLinkClick}
+                  className="text-gray-300 hover:text-blue-400 transition-colors text-left"
+                >
+                  Contact Us
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={handleLinkClick}
+                  className="text-gray-300 hover:text-blue-400 transition-colors text-left"
+                >
+                  Privacy Policy
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={handleLinkClick}
+                  className="text-gray-300 hover:text-blue-400 transition-colors text-left"
+                >
+                  Terms of Service
+                </button>
+              </li>
             </ul>
           </div>
         </div>
@@ -494,7 +544,10 @@ const DashboardPage: React.FC = () => {
               Quick Actions
             </h3>
             <div className="space-y-3">
-              <button className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+              <Link
+                to="/"
+                className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors block"
+              >
                 <div className="flex items-center">
                   <PrismLogo size={20} className="mr-3" />
                   <div>
@@ -502,7 +555,7 @@ const DashboardPage: React.FC = () => {
                     <div className="text-sm text-gray-600">Start a comprehensive risk analysis</div>
                   </div>
                 </div>
-              </button>
+              </Link>
               <button className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
                 <div className="flex items-center">
                   <BarChart3 className="w-5 h-5 text-purple-600 mr-3" />

@@ -1,8 +1,29 @@
+
 import axios from 'axios';
 import { RiskAssessmentRequest, RiskAssessmentResponse, ApiResponse } from '../types';
 
-// Use environment variable or default to localhost:8000
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// Use environment variable or default based on environment
+const getApiBaseUrl = () => {
+  // Check if we have an explicit API URL from environment
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // Default based on environment
+  if (process.env.NODE_ENV === 'production') {
+    // For production deployment, you'll need to set this to your deployed backend URL
+    return 'https://your-backend-url.vercel.app';
+  }
+  
+  // Development default
+  return 'http://localhost:8000';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('API Base URL:', API_BASE_URL);
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Custom API URL:', process.env.REACT_APP_API_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -10,7 +31,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  timeout: 30000, // 30 seconds timeout
+  timeout: 60000, // 60 seconds timeout for production
   withCredentials: false, // Disable credentials for CORS
 });
 

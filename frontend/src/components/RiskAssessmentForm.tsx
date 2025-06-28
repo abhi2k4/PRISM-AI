@@ -119,7 +119,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({ onSubmit, loadi
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div className="mx-auto px-10 p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">PRISM Risk Assessment</h2>
         <p className="text-gray-600">
@@ -134,7 +134,6 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({ onSubmit, loadi
             const Icon = step.icon;
             const isActive = currentStep === step.id;
             const isCompleted = currentStep > step.id;
-            const isValid = isStepValid(step.id);
             
             return (
               <div key={step.id} className="flex items-center">
