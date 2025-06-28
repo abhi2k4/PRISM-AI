@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, BarChart3, TrendingUp, Download, Share2, AlertCircle, CheckCircle, Shield, Zap } from 'lucide-react';
+import { Calendar, User, BarChart3, TrendingUp, Download, Share2, AlertCircle, CheckCircle, Shield, Zap } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { RiskAssessmentResponse } from '../types';
 import RiskBadge from './RiskBadge';
