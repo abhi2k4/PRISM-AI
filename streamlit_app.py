@@ -120,18 +120,42 @@ st.markdown("""
 def check_secrets():
     """Check if secrets are properly configured"""
     try:
+        # First check if secrets are available at all
+        if not hasattr(st, 'secrets'):
+            return False
+        
+        # Check if general section exists
+        if "general" not in st.secrets:
+            return False
+            
+        # Check if API key exists
+        if "GEMINI_API_KEY" not in st.secrets["general"]:
+            return False
+            
         api_key = st.secrets["general"]["GEMINI_API_KEY"]
         return bool(api_key and api_key.strip() and api_key != "your_api_key_here")
-    except KeyError:
+    except KeyError as e:
+        # Debug: show which key is missing
+        st.error(f"Missing key in secrets: {e}")
         return False
-    except Exception:
+    except Exception as e:
+        # Debug: show the actual error
+        st.error(f"Error accessing secrets: {e}")
         return False
 
 def initialize_environment():
     """Initialize environment variables from secrets"""
     try:
+        if not check_secrets():
+            return False
+            
         api_key = st.secrets["general"]["GEMINI_API_KEY"]
         os.environ["GEMINI_API_KEY"] = api_key
+        
+        # Also set the default model if available
+        if "DEFAULT_AI_MODEL" in st.secrets["general"]:
+            os.environ["DEFAULT_AI_MODEL"] = st.secrets["general"]["DEFAULT_AI_MODEL"]
+        
         return True
     except Exception as e:
         st.error(f"Error initializing environment: {str(e)}")
@@ -171,9 +195,14 @@ def show_setup_instructions():
        ```toml
        [general]
        GEMINI_API_KEY = "your_actual_api_key_here"
+       DEFAULT_AI_MODEL = "gemini-2.0-flash"
        ```
     
-    2. **Directory Structure:**
+    2. **Restart Streamlit after creating/editing secrets.toml**
+       - Stop the current app (Ctrl+C)
+       - Run `streamlit run streamlit_app.py` again
+    
+    3. **Directory Structure:**
        ```
        PRISM-AI/
        ├── .streamlit/
@@ -185,7 +214,7 @@ def show_setup_instructions():
            └── other files...
        ```
     
-    3. **Install dependencies:**
+    4. **Install dependencies:**
        ```bash
        pip install streamlit plotly pandas google-generativeai pydantic
        ```
@@ -198,14 +227,27 @@ def show_setup_instructions():
        ```toml
        [general]
        GEMINI_API_KEY = "your_actual_api_key_here"
+       DEFAULT_AI_MODEL = "gemini-2.0-flash"
        ```
     4. **Deploy your app**
     
-    #### Important Notes:
-    - Never commit `.streamlit/secrets.toml` to version control
-    - Add `secrets.toml` to your `.gitignore` file
-    - Use the same TOML format for both local and cloud deployment
+    #### Troubleshooting:
+    - **Restart Required**: Streamlit must be restarted after changing secrets.toml
+    - **File Location**: Ensure secrets.toml is in `.streamlit/` directory
+    - **TOML Format**: Values must be quoted strings
+    - **No Commit**: Add secrets.toml to .gitignore (never commit API keys)
+    
+    #### Current Status:
+    - Secrets file exists: {os.path.exists('.streamlit/secrets.toml')}
+    - API key configured: {check_secrets()}
     """)
+
+    # Show current secrets file status
+    secrets_path = ".streamlit/secrets.toml"
+    if os.path.exists(secrets_path):
+        st.info("✅ secrets.toml file found. If you just created/edited it, please restart Streamlit.")
+    else:
+        st.error("❌ secrets.toml file not found. Please create it as shown above.")
 
 # Initialize session state
 if 'assessment_results' not in st.session_state:
@@ -295,10 +337,32 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
+    # Debug: Show secrets information
+    with st.expander("🔧 Debug Information", expanded=False):
+        st.write("**Secrets Debug:**")
+        try:
+            st.write(f"- Secrets available: {hasattr(st, 'secrets')}")
+            if hasattr(st, 'secrets'):
+                st.write(f"- Available sections: {list(st.secrets.keys()) if st.secrets else 'None'}")
+                if "general" in st.secrets:
+                    general_keys = list(st.secrets["general"].keys())
+                    st.write(f"- General section keys: {general_keys}")
+                    if "GEMINI_API_KEY" in st.secrets["general"]:
+                        api_key = st.secrets["general"]["GEMINI_API_KEY"]
+                        st.write(f"- API key present: {bool(api_key)}")
+                        st.write(f"- API key length: {len(api_key) if api_key else 0}")
+                        st.write(f"- API key starts with: {api_key[:10]}..." if api_key and len(api_key) > 10 else "N/A")
+                else:
+                    st.write("- No 'general' section found")
+        except Exception as e:
+            st.write(f"- Error accessing secrets: {e}")
+    
     # Initialize environment from secrets
     secrets_configured = check_secrets()
     if secrets_configured:
-        initialize_environment()
+        env_initialized = initialize_environment()
+        if not env_initialized:
+            st.error("Failed to initialize environment variables")
     
     # Check setup
     setup_errors = check_setup()
