@@ -12,7 +12,7 @@ const getApiBaseUrl = () => {
   // Default based on environment
   if (process.env.NODE_ENV === 'production') {
     // For production deployment, you'll need to set this to your deployed backend URL
-    return 'https://prism-back.app';
+    return 'https://prism-back.vercel.app';
   }
   
   // Development default

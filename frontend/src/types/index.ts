@@ -1,5 +1,3 @@
-// TypeScript types for the Risk Assessment application
-
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export interface FinancialData {
@@ -62,31 +60,14 @@ export interface ChartData {
 export interface AssessmentHistory {
   id: string;
   entity_name: string;
-  entity_type?: string;
   assessment_date: string;
   overall_risk_level: RiskLevel;
   confidence_score: number;
-  impact_score?: number;
-  created_at?: string;
 }
 
 export interface DashboardStats {
   total_assessments: number;
-  high_risk_count: number;
-  medium_risk_count?: number;
-  low_risk_count?: number;
+  high_risk_entities: number;
   average_confidence: number;
-  assessment_growth?: string;
-  risk_trend?: string;
-  confidence_trend?: string;
-  last_updated?: string;
-  risk_trends?: RiskTrendData[];
-}
-
-export interface RiskTrendData {
-  date: string;
-  assessments: number;
-  highRisk: number;
-  mediumRisk?: number;
-  lowRisk?: number;
+  recent_assessments: AssessmentHistory[];
 }
