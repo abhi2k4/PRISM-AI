@@ -1,91 +1,107 @@
 """
-Pydantic Models for Risk Assessment
+Enhanced Pydantic Models for PRISM 2.0
 """
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field, validator
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 from enum import Enum
 
 class RiskLevel(str, Enum):
-    """Risk level enumeration"""
-    LOW = "LOW"
-    MEDIUM = "MEDIUM"
-    HIGH = "HIGH"
-    CRITICAL = "CRITICAL"
+    LOW = "Low"
+    MEDIUM = "Medium"
+    HIGH = "High"
+    CRITICAL = "Critical"
 
-class RiskFactor(BaseModel):
-    """Individual risk factor model"""
-    category: str = Field(..., description="Risk category (e.g., Financial, Operational)")
-    risk_level: RiskLevel = Field(..., description="Risk level for this factor")
-    description: str = Field(..., description="Description of the risk factor")
-    contributing_factors: List[str] = Field(default=[], description="List of contributing factors")
-    impact_score: float = Field(..., ge=0, le=2, description="Impact score (0-2)")
+class TrendDirection(str, Enum):
+    INCREASING = "Increasing"
+    STABLE = "Stable"
+    DECREASING = "Decreasing"
 
-class FinancialData(BaseModel):
-    """Financial data for risk assessment"""
-    revenue: Optional[float] = Field(None, description="Annual revenue")
-    profit_margin: Optional[float] = Field(None, description="Profit margin percentage")
-    debt_to_equity: Optional[float] = Field(None, description="Debt to equity ratio")
-    cash_flow: Optional[float] = Field(None, description="Operating cash flow")
-    financial_trends: Optional[Dict[str, Any]] = Field(None, description="Historical financial trends")
+class EnhancedRiskScore(BaseModel):
+    score: float = Field(..., ge=0, le=100, description="Risk score from 0-100")
+    level: RiskLevel = Field(..., description="Risk level classification")
+    factors: List[str] = Field(..., description="Contributing risk factors")
+    trend: Optional[TrendDirection] = Field(None, description="Risk trend direction")
+    confidence: Optional[float] = Field(None, ge=0, le=100, description="AI confidence in assessment")
+    
+    @validator('score')
+    def validate_score(cls, v):
+        return round(v, 2)
 
 class RiskAssessmentRequest(BaseModel):
-    """Request model for risk assessment"""
-    entity_name: str = Field(..., description="Name of the entity being assessed")
-    entity_type: str = Field(default="company", description="Type of entity (company, investment, project)")
-    industry: Optional[str] = Field(None, description="Industry sector")
-    geographic_exposure: Optional[List[str]] = Field(None, description="Geographic markets/regions")
-    
-    # Financial information
-    financial_data: Optional[FinancialData] = Field(None, description="Financial data for assessment")
-    
-    # Additional context
-    additional_context: Optional[str] = Field(None, description="Additional context or specific concerns")
-    assessment_scope: Optional[List[str]] = Field(
-        default=["financial", "operational", "market", "compliance"],
-        description="Scope of risk assessment"
-    )
-    
-    # Request metadata
-    requested_by: Optional[str] = Field(None, description="Person requesting the assessment")
-    urgency_level: Optional[str] = Field(default="normal", description="Urgency level (low, normal, high)")
+    entity_name: str = Field(..., min_length=1, max_length=200)
+    entity_type: str = Field(..., description="Type of entity (company, project, investment, etc.)")
+    description: str = Field(..., min_length=10, description="Detailed description of the entity")
+    financial_data: Dict[str, Any] = Field(default_factory=dict)
+    market_data: Dict[str, Any] = Field(default_factory=dict)
+    operational_data: Dict[str, Any] = Field(default_factory=dict)
+    compliance_data: Dict[str, Any] = Field(default_factory=dict)
+    enable_monitoring: Optional[bool] = Field(False, description="Enable continuous risk monitoring")
+    priority: Optional[str] = Field("normal", description="Assessment priority level")
 
-class RiskAssessmentResponse(BaseModel):
-    """Response model for risk assessment"""
-    entity_name: str = Field(..., description="Name of the assessed entity")
-    assessment_date: datetime = Field(..., description="Date of assessment")
-    overall_risk_level: RiskLevel = Field(..., description="Overall risk level")
-    confidence_score: float = Field(..., ge=0, le=1, description="Confidence score (0-1)")
+class EnhancedRiskAssessmentResponse(BaseModel):
+    entity_name: str
+    overall_risk_score: float = Field(..., ge=0, le=100)
+    risk_level: RiskLevel
+    financial_risk: EnhancedRiskScore
+    market_risk: EnhancedRiskScore
+    operational_risk: EnhancedRiskScore
+    compliance_risk: EnhancedRiskScore
+    recommendations: List[str]
+    confidence_score: float = Field(..., ge=0, le=100)
+    assessment_summary: str
     
-    # Detailed risk analysis
-    risk_factors: List[RiskFactor] = Field(..., description="Individual risk factors")
-    recommendations: List[str] = Field(..., description="Risk mitigation recommendations")
-    summary: str = Field(..., description="Executive summary of the assessment")
+    # Enhanced fields
+    assessment_id: Optional[str] = None
+    timestamp: Optional[str] = None
+    model_version: Optional[str] = None
+    processing_time: Optional[str] = None
+    key_insights: Optional[List[str]] = None
+    early_warnings: Optional[List[str]] = None
+    risk_correlations: Optional[Dict[str, float]] = None
     
-    # Metadata
-    assessment_id: Optional[str] = Field(None, description="Unique assessment identifier")
-    methodology_version: str = Field(default="1.0", description="Assessment methodology version")
+    class Config:
+        schema_extra = {
+            "example": {
+                "entity_name": "TechCorp Inc",
+                "overall_risk_score": 35.5,
+                "risk_level": "Medium",
+                "financial_risk": {
+                    "score": 25.0,
+                    "level": "Low",
+                    "factors": ["Strong cash flow", "Moderate debt levels"],
+                    "trend": "Stable",
+                    "confidence": 95.0
+                },
+                "recommendations": ["Implement risk monitoring", "Diversify market exposure"],
+                "confidence_score": 92.0,
+                "assessment_summary": "Moderate risk profile with stable outlook"
+            }
+        }
+
+class BatchRiskRequest(BaseModel):
+    entities: List[RiskAssessmentRequest] = Field(..., min_items=1, max_items=10)
+    batch_id: Optional[str] = Field(None, description="Optional batch identifier")
+    priority: Optional[str] = Field("normal", description="Batch processing priority")
+
+class RiskTrendResponse(BaseModel):
+    entity_name: str
+    period_days: int
+    trend_direction: TrendDirection
+    risk_score_history: List[Dict[str, Any]]
+    trend_analysis: str
+    forecast: Optional[Dict[str, Any]] = None
+
+class RiskComparisonRequest(BaseModel):
+    entity_names: List[str] = Field(..., min_items=2, max_items=5)
+    comparison_criteria: Optional[List[str]] = Field(None, description="Specific criteria to compare")
 
 class RiskMonitoringAlert(BaseModel):
-    """Model for risk monitoring alerts"""
-    entity_name: str = Field(..., description="Name of the monitored entity")
-    alert_type: str = Field(..., description="Type of alert")
-    risk_level: RiskLevel = Field(..., description="Current risk level")
-    previous_risk_level: RiskLevel = Field(..., description="Previous risk level")
-    change_factors: List[str] = Field(..., description="Factors causing the risk change")
-    alert_date: datetime = Field(default_factory=datetime.now, description="Date of alert")
-    requires_action: bool = Field(default=False, description="Whether immediate action is required")
-
-class BenchmarkData(BaseModel):
-    """Benchmark data for comparative analysis"""
-    industry_average_risk: RiskLevel = Field(..., description="Industry average risk level")
-    peer_companies: List[Dict[str, Any]] = Field(default=[], description="Peer company risk data")
-    market_trends: Dict[str, Any] = Field(default={}, description="Relevant market trends")
-
-class RiskAssessmentConfig(BaseModel):
-    """Configuration for risk assessment"""
-    include_ai_analysis: bool = Field(default=True, description="Whether to include AI analysis")
-    detailed_reporting: bool = Field(default=False, description="Whether to generate detailed reports")
-    benchmark_comparison: bool = Field(default=False, description="Whether to include benchmark comparison")
-    monitoring_enabled: bool = Field(default=False, description="Whether to enable ongoing monitoring")
-    custom_weights: Optional[Dict[str, float]] = Field(None, description="Custom weights for risk factors")
+    alert_id: str
+    entity_name: str
+    alert_type: str
+    severity: RiskLevel
+    message: str
+    timestamp: datetime
+    status: str = Field(default="active")
+    resolution: Optional[str] = None
