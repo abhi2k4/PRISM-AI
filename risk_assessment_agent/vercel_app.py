@@ -11,8 +11,7 @@ FRONTEND_URLS = [
     "https://prism-assist.vercel.app",  # Your actual frontend URL (remove trailing slash)
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://localhost:3001", 
-    "http://127.0.0.1:3001"
+    "http://prism.abhishekthormothe.in
 ]
 
 # Clear existing CORS middleware and add new one
